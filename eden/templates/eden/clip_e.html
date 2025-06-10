@@ -1,0 +1,59 @@
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}{{ clip.name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ clip.name }}</h1>
+
+  <video id="clipE" width="640" controls>
+    <source src="{{ clip.video.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p>{{ clip.description }}</p>
+
+  <div id="choices" style="display:none;">
+    <h2>Choose what to decrypt:</h2>
+    <div class="choices" style="display: flex; gap: 2em; justify-content: center; margin-top: 1em;">
+      <button
+        class="choice-link"
+        id="choice-a"
+        hx-get="{% url 'clip_detail' 'clip_d' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML">
+        DECRYPT HIDDEN A
+      </button>
+      <button
+        class="choice-link"
+        id="choice-b"
+        hx-get="{% url 'clip_detail' 'clip_g' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML">
+        DECRYPT HIDDEN B
+      </button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const video = document.getElementById('clipE');
+  const choicesDiv = document.getElementById('choices');
+  const CHOICES_SHOW_TIME = 105; // 1:45 in seconds
+  let choicesShown = false;
+
+  if (choicesDiv) choicesDiv.style.display = 'none';
+
+  video.addEventListener('timeupdate', () => {
+    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
+      if (choicesDiv) choicesDiv.style.display = 'block';
+      choicesShown = true;
+    }
+    // Hide if rewound before 1:45
+    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
+      if (choicesDiv) choicesDiv.style.display = 'none';
+      choicesShown = false;
+    }
+  });
+</script>
+{% endblock %}

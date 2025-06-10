@@ -1,0 +1,98 @@
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}{{ clip.name }}{% endblock %}
+
+{% block content %}
+  <h1>🎥 {{ clip.name }}</h1>
+
+  <!-- Video -->
+  <video id="clipA" width="640" controls>
+    <source src="{{ clip.video.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Audio Prompt -->
+  <audio id="voicePrompt">
+    <source src="{% static 'audio/my name is.mp3' %}" type="audio/mpeg">
+  </audio>
+
+  <!-- Press Play Button (AJAX to Clip B) -->
+  {% if choices %}
+    {% with next_clip=choices.0.to_clip.slug %}
+      <button id="pressPlayBtn"
+        hx-get="{% url 'clip_detail' next_clip %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+        style="display:none;">
+        ▶️ Press Play
+      </button>
+    {% endwith %}
+  {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const video = document.getElementById('clipA');
+  const pressPlayBtn = document.getElementById('pressPlayBtn');
+  const voicePrompt = document.getElementById('voicePrompt');
+
+  const AUDIO_TRIGGER_TIME = 20.0; // Change this if you want a different time
+  const BUTTON_SHOW_TIME = 30.0;
+  const IDLE_TIMEOUT = 10 * 1000; // 10 seconds
+
+  let audioPlayed = false;
+  let buttonShown = false;
+  let idleTimer = null;
+
+  if (pressPlayBtn) pressPlayBtn.style.display = 'none';
+
+  video.addEventListener('timeupdate', () => {
+    const currentTime = video.currentTime;
+
+    // Play audio at AUDIO_TRIGGER_TIME
+    if (currentTime >= AUDIO_TRIGGER_TIME && !audioPlayed) {
+      voicePrompt.play();
+      audioPlayed = true;
+    }
+
+    // Show press play button and pause at BUTTON_SHOW_TIME
+    if (currentTime >= BUTTON_SHOW_TIME && !buttonShown) {
+      if (pressPlayBtn) pressPlayBtn.style.display = 'block';
+      video.pause();
+      buttonShown = true;
+
+      // Start idle timer
+      idleTimer = setTimeout(() => {
+        window.location.reload();
+      }, IDLE_TIMEOUT);
+    }
+
+    // Reset if user rewinds before key moments
+    if (currentTime < AUDIO_TRIGGER_TIME) {
+      voicePrompt.pause();
+      voicePrompt.currentTime = 0;
+      audioPlayed = false;
+    }
+
+    if (currentTime < BUTTON_SHOW_TIME && buttonShown) {
+      if (pressPlayBtn) pressPlayBtn.style.display = 'none';
+      buttonShown = false;
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      }
+    }
+  });
+
+  // If user clicks the button, clear idle timer
+  if (pressPlayBtn) {
+    pressPlayBtn.addEventListener('click', () => {
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      }
+    });
+  }
+</script>
+{% endblock %}

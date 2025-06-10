@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}EDEN Interactive Film{% endblock %}</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <style>
+    /* ...your shared styles here... */
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div id="main-content">
+    {% block content %}{% endblock %}
+  </div>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

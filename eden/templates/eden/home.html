@@ -1,0 +1,23 @@
+<!-- eden/templates/eden/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EDEN Interactive Film</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>Welcome</h1>
+    <p>Everyday.Digital.Entertainment.Network</p>
+    <p>Let the mystery begin...</p>
+    <div id="main-content">
+        <a 
+            href="{% url 'clip_a' %}" 
+            hx-get="{% url 'clip_a' %}" 
+            hx-target="#main-content" 
+            hx-swap="innerHTML">
+            Watch Clip A
+        </a>
+    </div>
+</body>
+</html>

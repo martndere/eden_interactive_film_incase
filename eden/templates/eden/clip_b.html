@@ -1,0 +1,119 @@
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}{{ clip.name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ clip.name }}</h1>
+
+  <video id="clipB" width="640" controls>
+    <source src="{{ clip.video.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Audio Prompt -->
+  <audio id="voicePrompt">
+    <source src="{% static 'audio/choose_case_file.mp3' %}" type="audio/mpeg">
+  </audio>
+
+  <!-- Character Choices (hidden by default) -->
+  <div id="choices" style="display:none;">
+    <h2>Who do you want to investigate?</h2>
+    <div class="choices">
+      {% for choice in choices %}
+        <button
+          class="choice-link"
+          hx-get="{% url 'clip_detail' choice.to_clip.slug %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML">
+          {% if choice.image %}
+            <img src="{{ choice.image.url }}" alt="{{ choice.label }}" class="choice-img">
+          {% endif %}
+          <div>{{ choice.label }}</div>
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <style>
+    .choices {
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+      margin-top: 1em;
+    }
+    .choice-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid #ccc;
+      transition: transform 0.2s;
+      display: block;
+      margin: 0 auto 0.5em auto;
+    }
+    .choice-link {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-align: center;
+      outline: none;
+    }
+    .choice-link:hover .choice-img {
+      transform: scale(1.1);
+      border-color: #007bff;
+    }
+  </style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setupClipB() {
+  const video = document.getElementById('clipB');
+  const voicePrompt = document.getElementById('voicePrompt');
+  const choicesDiv = document.getElementById('choices');
+
+  const CHOICES_SHOW_TIME = 5.0;
+
+  let audioPlayed = false;
+  let choicesShown = false;
+
+  if (choicesDiv) choicesDiv.style.display = 'none';
+
+  video.addEventListener('timeupdate', () => {
+    const currentTime = video.currentTime;
+
+    // Show choices and play audio at 5s
+    if (currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
+      if (choicesDiv) choicesDiv.style.display = 'block';
+      video.pause();
+      choicesShown = true;
+      if (!audioPlayed) {
+        voicePrompt.play();
+        audioPlayed = true;
+      }
+    }
+
+    // Reset audio if rewound before 5s
+    if (currentTime < CHOICES_SHOW_TIME && (audioPlayed || choicesShown)) {
+      voicePrompt.pause();
+      voicePrompt.currentTime = 0;
+      audioPlayed = false;
+      if (choicesDiv) choicesDiv.style.display = 'none';
+      choicesShown = false;
+    }
+  });
+}
+
+// Run on initial load
+setupClipB();
+
+// Run after htmx swaps (for AJAX navigation)
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+  if (document.getElementById('clipB')) {
+    setupClipB();
+  }
+});
+</script>
+{% endblock %}

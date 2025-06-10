@@ -1,0 +1,47 @@
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}{{ clip.name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ clip.name }}</h1>
+  <video id="clipF" width="640" controls>
+    <source src="{{ clip.video.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p>{{ clip.description }}</p>
+
+  <div id="choices" style="display:none; margin-top:1em; text-align:center;">
+    <button
+      class="choice-link"
+      id="choice-playback"
+      hx-get="{% url 'clip_detail' 'clip_g' %}"
+      hx-target="#main-content"
+      hx-swap="innerHTML">
+      PLAYBACK
+    </button>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const video = document.getElementById('clipF');
+  const choicesDiv = document.getElementById('choices');
+  const CHOICES_SHOW_TIME = 10; // seconds
+  let choicesShown = false;
+
+  if (choicesDiv) choicesDiv.style.display = 'none';
+
+  video.addEventListener('timeupdate', () => {
+    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
+      if (choicesDiv) choicesDiv.style.display = 'block';
+      choicesShown = true;
+    }
+    // Hide if rewound before 10s
+    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
+      if (choicesDiv) choicesDiv.style.display = 'none';
+      choicesShown = false;
+    }
+  });
+</script>
+{% endblock %}
