@@ -4,31 +4,36 @@
 {% block title %}{{ clip.name }}{% endblock %}
 
 {% block content %}
-  <h1>{{ clip.name }}</h1>
+  <div class="video-editor-container">
+    <h1 class="main-title">{{ clip.name }}</h1>
 
-  <video id="clipD" width="640" controls>
-    <source src="{{ clip.video.url }}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <p>{{ clip.description }}</p>
+    <div class="video-player">
+      <video id="clipD" class="clip-video" controls>
+        <source src="{{ clip.video.url }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
 
-  <div id="choices" style="display:none; gap:2em; justify-content:center; margin-top:1em;">
-    <button
-      class="choice-link"
-      id="choice-suspect-a"
-      hx-get="{% url 'clip_detail' 'clip_f' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML">
-      FOLLOW SUSPECT
-    </button>
-    <button
-      class="choice-link"
-      id="choice-suspect-b"
-      hx-get="{% url 'clip_detail' 'clip_g' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML">
-      FOLLOW SUSPECT B
-    </button>
+    <p class="subtitle">{{ clip.description }}</p>
+
+    <div id="choices" style="display:none; gap:2em; justify-content:center; margin-top:1em;" class="choices">
+      <button
+        class="choice-link"
+        id="choice-suspect-a"
+        hx-get="{% url 'clip_detail' 'clip_f' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML">
+        FOLLOW SUSPECT
+      </button>
+      <button
+        class="choice-link"
+        id="choice-suspect-b"
+        hx-get="{% url 'clip_detail' 'clip_g' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML">
+        FOLLOW SUSPECT B
+      </button>
+    </div>
   </div>
 {% endblock %}
 
@@ -39,16 +44,14 @@ function setupClipD() {
   const choicesDiv = document.getElementById('choices');
   const suspectA = document.getElementById('choice-suspect-a');
   const suspectB = document.getElementById('choice-suspect-b');
-  const CHOICES_SHOW_TIME = 13; // seconds
-  const IDLE_TIMEOUT = 10 * 1000; // 10 seconds
+  const CHOICES_SHOW_TIME = 13;
+  const IDLE_TIMEOUT = 10000;
 
-  // Use properties on the video element to avoid redeclaration
   video._choicesShown = video._choicesShown || false;
   video._idleTimer = video._idleTimer || null;
 
   if (choicesDiv) choicesDiv.style.display = 'none';
 
-  // Remove previous event listener if any
   if (video._clipDHandler) {
     video.removeEventListener('timeupdate', video._clipDHandler);
   }
@@ -59,13 +62,11 @@ function setupClipD() {
       video.pause();
       video._choicesShown = true;
 
-      // Start idle timer to auto-select FOLLOW SUSPECT (Clip F)
       video._idleTimer = setTimeout(() => {
         if (suspectA) suspectA.click();
       }, IDLE_TIMEOUT);
     }
 
-    // If user rewinds before 0:13, hide choices and clear timer
     if (video.currentTime < CHOICES_SHOW_TIME && video._choicesShown) {
       if (choicesDiv) choicesDiv.style.display = 'none';
       video._choicesShown = false;
@@ -78,7 +79,6 @@ function setupClipD() {
 
   video.addEventListener('timeupdate', video._clipDHandler);
 
-  // If user clicks any choice, clear idle timer
   [suspectA, suspectB].forEach(btn => {
     btn.addEventListener('click', () => {
       if (video._idleTimer) {
@@ -89,10 +89,8 @@ function setupClipD() {
   });
 }
 
-// Run on initial load
 setupClipD();
 
-// Run after htmx swaps (for AJAX navigation)
 document.body.addEventListener('htmx:afterSwap', function(evt) {
   if (document.getElementById('clipD')) {
     setupClipD();

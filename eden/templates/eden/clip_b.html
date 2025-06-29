@@ -4,67 +4,37 @@
 {% block title %}{{ clip.name }}{% endblock %}
 
 {% block content %}
-  <h1>{{ clip.name }}</h1>
+<div class="video-editor-container">
+  <h1 class="main-title">{{ clip.name }}</h1>
 
-  <video id="clipB" width="640" controls>
-    <source src="{{ clip.video.url }}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <div class="video-player">
+    <video id="clipB" class="clip-video" controls>
+      <source src="{{ clip.video.url }}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
 
-  <!-- Audio Prompt -->
   <audio id="voicePrompt">
     <source src="{% static 'audio/choose_case_file.mp3' %}" type="audio/mpeg">
   </audio>
 
-  <!-- Character Choices (hidden by default) -->
-  <div id="choices" style="display:none;">
-    <h2>Who do you want to investigate?</h2>
-    <div class="choices">
+  <!-- Character Choices -->
+  <div id="choices" style="display: none;">
+    <h2 class="subtitle">Who do you want to investigate?</h2>
+    <div class="mini-choice-strip">
       {% for choice in choices %}
-        <button
-          class="choice-link"
-          hx-get="{% url 'clip_detail' choice.to_clip.slug %}"
-          hx-target="#main-content"
-          hx-swap="innerHTML">
+        <button class="mini-choice-link"
+                hx-get="{% url 'clip_detail' choice.to_clip.slug %}"
+                hx-target="#main-content"
+                hx-swap="innerHTML">
           {% if choice.image %}
-            <img src="{{ choice.image.url }}" alt="{{ choice.label }}" class="choice-img">
+            <img src="{{ choice.image.url }}" alt="{{ choice.label }}" class="mini-choice-img">
           {% endif %}
-          <div>{{ choice.label }}</div>
         </button>
       {% endfor %}
     </div>
   </div>
-
-  <style>
-    .choices {
-      display: flex;
-      justify-content: center;
-      gap: 2em;
-      margin-top: 1em;
-    }
-    .choice-img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 2px solid #ccc;
-      transition: transform 0.2s;
-      display: block;
-      margin: 0 auto 0.5em auto;
-    }
-    .choice-link {
-      background: none;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      text-align: center;
-      outline: none;
-    }
-    .choice-link:hover .choice-img {
-      transform: scale(1.1);
-      border-color: #007bff;
-    }
-  </style>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -75,7 +45,6 @@ function setupClipB() {
   const choicesDiv = document.getElementById('choices');
 
   const CHOICES_SHOW_TIME = 5.0;
-
   let audioPlayed = false;
   let choicesShown = false;
 
@@ -84,7 +53,6 @@ function setupClipB() {
   video.addEventListener('timeupdate', () => {
     const currentTime = video.currentTime;
 
-    // Show choices and play audio at 5s
     if (currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
       if (choicesDiv) choicesDiv.style.display = 'block';
       video.pause();
@@ -95,7 +63,6 @@ function setupClipB() {
       }
     }
 
-    // Reset audio if rewound before 5s
     if (currentTime < CHOICES_SHOW_TIME && (audioPlayed || choicesShown)) {
       voicePrompt.pause();
       voicePrompt.currentTime = 0;
@@ -106,11 +73,9 @@ function setupClipB() {
   });
 }
 
-// Run on initial load
 setupClipB();
 
-// Run after htmx swaps (for AJAX navigation)
-document.body.addEventListener('htmx:afterSwap', function(evt) {
+document.body.addEventListener('htmx:afterSwap', function () {
   if (document.getElementById('clipB')) {
     setupClipB();
   }

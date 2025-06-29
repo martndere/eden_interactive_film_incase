@@ -4,34 +4,42 @@
 {% block title %}{{ clip.name }}{% endblock %}
 
 {% block content %}
-  <h1>{{ clip.name }}</h1>
-  <video id="clipH" width="640" controls>
-    <source src="{{ clip.video.url }}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <audio id="voicePrompt">
-    <source src="{% static 'audio/he was manic.mp3' %}" type="audio/mpeg">
-  </audio>
-  <p>{{ clip.description }}</p>
+  <div class="video-editor-container">
+    <h1 class="main-title">{{ clip.name }}</h1>
 
-  <div id="ending" style="display:none; text-align:center;">
-    <button
-      class="choice-link"
-      id="choose-another"
-      hx-get="{% url 'clip_detail' 'clip_a' %}"
-      hx-target="#main-content"
-      hx-swap="innerHTML">
-      CHOOSE ANOTHER SUSPECT
-    </button>
-    <button
-      class="choice-link"
-      id="access-denied"
-      type="button">
-      ACCESS DENIED
-    </button>
-  </div>
-  <div id="denied-screen" style="display:none; text-align:center; font-size:2em; margin-top:2em;">
-    ACCESS DENIED.
+    <div class="video-player">
+      <video id="clipH" class="clip-video" controls>
+        <source src="{{ clip.video.url }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <audio id="voicePrompt">
+      <source src="{% static 'audio/he was manic.mp3' %}" type="audio/mpeg">
+    </audio>
+
+    <p class="subtitle">{{ clip.description }}</p>
+
+    <div id="ending" style="display:none; text-align:center;" class="choices">
+      <button
+        class="choice-link"
+        id="choose-another"
+        hx-get="{% url 'clip_detail' 'clip_a' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML">
+        CHOOSE ANOTHER SUSPECT
+      </button>
+      <button
+        class="choice-link"
+        id="access-denied"
+        type="button">
+        ACCESS DENIED
+      </button>
+    </div>
+
+    <div id="denied-screen" style="display:none; text-align:center; font-size:2em; margin-top:2em;">
+      ACCESS DENIED.
+    </div>
   </div>
 {% endblock %}
 
@@ -43,7 +51,7 @@ function setupClipH() {
   const voicePrompt = document.getElementById('voicePrompt');
   const endingDiv = document.getElementById('ending');
   const deniedScreen = document.getElementById('denied-screen');
-  const CHOICES_SHOW_TIME = 90; // 1:30 in seconds
+  const CHOICES_SHOW_TIME = 90;
 
   let audioPlayed = false;
   let choicesShown = false;
@@ -51,15 +59,9 @@ function setupClipH() {
   if (endingDiv) endingDiv.style.display = 'none';
   if (deniedScreen) deniedScreen.style.display = 'none';
 
-  // Remove previous handler if present (for htmx navigation)
-  if (video._clipHHandler) {
-    video.removeEventListener('timeupdate', video._clipHHandler);
-  }
-  if (video._clipHPlayHandler) {
-    video.removeEventListener('play', video._clipHPlayHandler);
-  }
+  if (video._clipHHandler) video.removeEventListener('timeupdate', video._clipHHandler);
+  if (video._clipHPlayHandler) video.removeEventListener('play', video._clipHPlayHandler);
 
-  // Play audio when video starts
   video._clipHPlayHandler = function() {
     if (voicePrompt && !audioPlayed) {
       voicePrompt.currentTime = 0;
@@ -70,13 +72,11 @@ function setupClipH() {
   video.addEventListener('play', video._clipHPlayHandler);
 
   video._clipHHandler = function() {
-    // Show choices at 1:30
     if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
       if (endingDiv) endingDiv.style.display = 'block';
       choicesShown = true;
     }
 
-    // Hide choices if rewound before 1:30
     if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
       if (endingDiv) endingDiv.style.display = 'none';
       choicesShown = false;
@@ -85,7 +85,6 @@ function setupClipH() {
 
   video.addEventListener('timeupdate', video._clipHHandler);
 
-  // ACCESS DENIED button logic
   const accessDeniedBtn = document.getElementById('access-denied');
   if (accessDeniedBtn) {
     accessDeniedBtn.onclick = function() {
@@ -95,10 +94,8 @@ function setupClipH() {
   }
 }
 
-// Run on initial load
 setupClipH();
 
-// Run after htmx swaps (for AJAX navigation)
 document.body.addEventListener('htmx:afterSwap', function(evt) {
   if (document.getElementById('clipH')) {
     setupClipH();

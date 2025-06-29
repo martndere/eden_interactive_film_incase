@@ -1,0 +1,64 @@
+<!-- templates/eden/partials/clip_list_partial.html -->
+<div class="clip-strip-container">
+  <button class="scroll-btn left" onclick="scrollClipList(-1)">◀</button>
+
+  <div class="clip-list-row" id="clip-scroll-row">
+    {% for clip in clips %}
+      <div class="clip-card">
+        <h3>{{ clip.title }}</h3>
+
+        {% if clip.video_file %}
+          <video class="clip-video" muted preload="metadata" playsinline>
+            <source src="{{ clip.video_file.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        {% else %}
+          <p>No video uploaded yet.</p>
+        {% endif %}
+
+        <p>{{ clip.description }}</p>
+
+        {% if request.user.is_staff %}
+          <form hx-post="/api/clips/delete/{{ clip.id }}/" 
+                hx-target="#clip-list"
+                hx-swap="innerHTML">
+            {% csrf_token %}
+            <button type="submit">🗑️ Delete</button>
+          </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>No clips uploaded yet.</p>
+    {% endfor %}
+  </div>
+
+  <button class="scroll-btn right" onclick="scrollClipList(1)">▶</button>
+</div>
+
+<script>
+  function scrollClipList(direction) {
+    const container = document.getElementById('clip-scroll-row');
+    const scrollAmount = 300;
+    container.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth'
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const video = entry.target;
+      if (entry.isIntersecting) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+  }, {
+    threshold: 0.5
+  });
+
+  document.querySelectorAll('.clip-video').forEach(video => {
+    observer.observe(video);
+  });
+</script>

@@ -1,17 +1,37 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>{% block title %}EDEN Interactive Film{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {% load static %}
+<link rel="stylesheet" href="{% static 'eden/css/style.css' %}">
+<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-  <style>
-    /* ...your shared styles here... */
-  </style>
+
   {% block extra_head %}{% endblock %}
 </head>
+
 <body>
-  <div id="main-content">
+  <header>
+    {% block header %}
+    <!-- Optional site header or logo -->
+    {% endblock %}
+  </header>
+
+  <main id="main-content">
     {% block content %}{% endblock %}
-  </div>
+  </main>
+
+  <footer>
+    {% block footer %}
+    <!-- Optional footer -->
+    {% endblock %}
+  </footer>
+
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

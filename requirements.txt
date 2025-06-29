@@ -2,4 +2,6 @@ Django>=3.2,<5.0
 Pillow
 django-htmx
 whitenoise
+rest_framework
+restframework-simplejwt
 # Add any other dependencies your project uses below

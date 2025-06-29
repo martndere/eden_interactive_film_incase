@@ -1,23 +1,47 @@
-<!-- eden/templates/eden/home.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>EDEN Interactive Film</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</head>
-<body>
-    <h1>Welcome</h1>
-    <p>Everyday.Digital.Entertainment.Network</p>
-    <p>Let the mystery begin...</p>
-    <div id="main-content">
-        <a 
-            href="{% url 'clip_a' %}" 
-            hx-get="{% url 'clip_a' %}" 
-            hx-target="#main-content" 
-            hx-swap="innerHTML">
-            Watch Clip A
-        </a>
-    </div>
-</body>
-</html>
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}Home | EDEN Interactive Film{% endblock %}
+
+{% block content %}
+
+<!-- HTMX Trigger to load API data -->
+<div id="clip-list" 
+     hx-get="/api/clips/html/" 
+     hx-trigger="load"
+     hx-target="#clip-list" 
+     hx-swap="innerHTML">
+  Loading clips...
+</div>
+
+<div class="video-editor-container">
+  <h1 class="main-title">Welcome</h1>
+  <p class="tagline">Everyday. Digital. Entertainment. Network</p>
+  <p class="subtitle">Let the mystery begin...</p>
+
+  <div id="main-content" class="start-button-container">
+    <a 
+      href="{% url 'clip_a' %}" 
+      hx-get="{% url 'clip_a' %}" 
+      hx-target="#main-content" 
+      hx-swap="innerHTML">
+      <button class="watch-button">▶ Watch Clip A</button>
+    </a>
+  </div>
+</div>
+
+<form hx-get="/api/clips/html/" hx-target="#clip-list" hx-push-url="true" class="search-form">
+  <input type="text" name="q" placeholder="Search clips..." class="search-input" />
+  <button type="submit" class="search-button">🔍 Search</button>
+</form>
+
+{% if request.user.is_staff %}
+  <form hx-post="/api/clips/upload/" hx-target="#clip-list" enctype="multipart/form-data" class="upload-form">
+    <input type="text" name="title" placeholder="Clip Title" required />
+    <input type="file" name="video_file" accept="video/mp4" required />
+    <textarea name="description" placeholder="Description..."></textarea>
+    <button type="submit" class="upload-button">📤 Upload Clip</button>
+  </form>
+{% endif %}
+
+{% endblock %}
