@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ film.title }}</h2>
+<p>{{ film.description }}</p>
+<a href="{% url 'user_content:clip_create' film.pk %}">Add Clip</a>
+<h3>Clips</h3>
+<ul>
+  {% for clip in film.clips.all %}
+    <li>
+      {{ clip.name }} - <a href="{% url 'user_content:choice_create' clip.pk %}">Add Choice</a>
+      <br>
+      {% if clip.video %}
+        <video src="{{ clip.video.url }}" controls width="320"></video>
+      {% endif %}
+      <p>{{ clip.narrative }}</p>
+    </li>
+  {% empty %}
+    <li>No clips yet.</li>
+  {% endfor %}
+</ul>
+<a href="{% url 'user_content:my_films' %}">Back to My Films</a>
+{% endblock %}

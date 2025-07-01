@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Interactive Films</h2>
+<a href="{% url 'user_content:film_create' %}">Create New Film</a>
+<ul>
+  {% for film in films %}
+    <li>
+      <a href="{% url 'user_content:film_detail' film.pk %}">{{ film.title }}</a>
+      ({{ film.created_at|date:"Y-m-d" }})
+    </li>
+  {% empty %}
+    <li>You have not created any films yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

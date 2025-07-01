@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Choice</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save Choice</button>
+</form>
+<a href="{% url 'user_content:film_detail' form.instance.from_clip.film.pk %}">Back to Film</a>
+{% endblock %}

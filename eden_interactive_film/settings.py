@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django_htmx',
     'rest_framework',
     'eden',
+    'user',
 ]
 
 MIDDLEWARE = [
