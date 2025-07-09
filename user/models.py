@@ -20,6 +20,8 @@ class UserClip(models.Model):
     prompt_time = models.FloatField(default=0)
     audio_prompt = models.FileField(upload_to='user_audio_prompts/', blank=True)
     order = models.PositiveIntegerField(default=0)
+    edit_start = models.FloatField(null=True, blank=True)
+    edit_end = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.film.title})"
