@@ -1,4 +1,4 @@
-<!-- templates/base.html -->
+<!-- templates/base_clip.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   {% load static %}
-<link rel="stylesheet" href="{% static 'eden/css/style.css' %}">
-<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <link rel="stylesheet" href="{% static 'eden/css/style.css' %}">
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
 
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
@@ -17,6 +17,19 @@
 
 <body>
   <header>
+    <nav>
+      <a href="{% url 'home' %}">Home</a>
+      {% if user.is_authenticated %}
+        <span>Welcome, {{ user.username }}!</span>
+        <a href="{% url 'user_content:my_films' %}">My Films</a>
+        <a href="{% url 'user_content:film_create' %}">Create Film</a>
+        <!-- <a href="{% url 'user_content:profile' %}">Profile</a> -->
+        <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
+      {% endif %}
+    </nav>
     {% block header %}
     <!-- Optional site header or logo -->
     {% endblock %}

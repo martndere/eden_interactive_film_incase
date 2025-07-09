@@ -1,8 +1,9 @@
-{% extends "base.html" %}
+{% extends "eden/base_clip.html" %}
 {% block content %}
 <h2>{{ film.title }}</h2>
 <p>{{ film.description }}</p>
 <a href="{% url 'user_content:clip_create' film.pk %}">Add Clip</a>
+<a href="{% url 'edit_clip' clip.pk %}">Edit this clip</a>
 <h3>Clips</h3>
 <ul>
   {% for clip in film.clips.all %}

@@ -1,9 +1,12 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views  # <-- Add this line
 from . import views
 
-app_name = 'user_content'
+app_name = 'user'
 
 urlpatterns = [
+    path('register/', views.register, name='register'),
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('my-films/', views.UserFilmListView.as_view(), name='my_films'),
     path('film/create/', views.UserFilmCreateView.as_view(), name='film_create'),
     path('film/<int:pk>/', views.UserFilmDetailView.as_view(), name='film_detail'),

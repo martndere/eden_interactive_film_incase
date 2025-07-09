@@ -14,6 +14,16 @@
     </video>
   </div>
 
+  <!-- News ticker below video player -->
+  <div class="news-ticker-container" id="newsTicker">
+    <div class="news-ticker">
+      <span>
+        BREAKING: Kenya launches Africa’s largest green tech hub! | Nairobi traffic robots now powered by AI! | Kenyan animators win global awards for interactive storytelling!
+      </span>
+    </div>
+  </div>
+  <!-- End news ticker -->
+
   <audio id="voicePrompt">
     <source src="{% static 'audio/choose_case_file.mp3' %}" type="audio/mpeg">
   </audio>
@@ -39,46 +49,54 @@
 
 {% block extra_scripts %}
 <script>
-function setupClipB() {
-  const video = document.getElementById('clipB');
-  const voicePrompt = document.getElementById('voicePrompt');
-  const choicesDiv = document.getElementById('choices');
-
-  const CHOICES_SHOW_TIME = 5.0;
-  let audioPlayed = false;
-  let choicesShown = false;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    const currentTime = video.currentTime;
-
-    if (currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'block';
-      video.pause();
-      choicesShown = true;
-      if (!audioPlayed) {
-        voicePrompt.play();
-        audioPlayed = true;
-      }
+  // Fade out the ticker after 10 seconds
+  setTimeout(function() {
+    var ticker = document.getElementById('newsTicker');
+    if (ticker) {
+      ticker.classList.add('fade-out');
     }
+  }, 10000);
 
-    if (currentTime < CHOICES_SHOW_TIME && (audioPlayed || choicesShown)) {
-      voicePrompt.pause();
-      voicePrompt.currentTime = 0;
-      audioPlayed = false;
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      choicesShown = false;
+  function setupClipB() {
+    const video = document.getElementById('clipB');
+    const voicePrompt = document.getElementById('voicePrompt');
+    const choicesDiv = document.getElementById('choices');
+
+    const CHOICES_SHOW_TIME = 5.0;
+    let audioPlayed = false;
+    let choicesShown = false;
+
+    if (choicesDiv) choicesDiv.style.display = 'none';
+
+    video.addEventListener('timeupdate', () => {
+      const currentTime = video.currentTime;
+
+      if (currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
+        if (choicesDiv) choicesDiv.style.display = 'block';
+        video.pause();
+        choicesShown = true;
+        if (!audioPlayed) {
+          voicePrompt.play();
+          audioPlayed = true;
+        }
+      }
+
+      if (currentTime < CHOICES_SHOW_TIME && (audioPlayed || choicesShown)) {
+        voicePrompt.pause();
+        voicePrompt.currentTime = 0;
+        audioPlayed = false;
+        if (choicesDiv) choicesDiv.style.display = 'none';
+        choicesShown = false;
+      }
+    });
+  }
+
+  setupClipB();
+
+  document.body.addEventListener('htmx:afterSwap', function () {
+    if (document.getElementById('clipB')) {
+      setupClipB();
     }
   });
-}
-
-setupClipB();
-
-document.body.addEventListener('htmx:afterSwap', function () {
-  if (document.getElementById('clipB')) {
-    setupClipB();
-  }
-});
 </script>
 {% endblock %}

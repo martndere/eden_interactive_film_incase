@@ -14,6 +14,16 @@
       </video>
     </div>
 
+            <!-- News ticker below video player -->
+  <div class="news-ticker-container" id="newsTicker">
+    <div class="news-ticker">
+      <span>
+        BREAKING: Kenya launches Africa’s largest green tech hub! | Nairobi traffic robots now powered by AI! | Kenyan animators win global awards for interactive storytelling!
+      </span>
+    </div>
+  </div>
+  <!-- End news ticker -->
+
     <p class="subtitle">{{ clip.description }}</p>
 
     <div id="choices" style="display:none; margin-top:1em; text-align:center;" class="choices">
@@ -31,6 +41,15 @@
 
 {% block extra_scripts %}
 <script>
+
+   // Fade out the ticker after 10 seconds
+  setTimeout(function() {
+    var ticker = document.getElementById('newsTicker');
+    if (ticker) {
+      ticker.classList.add('fade-out');
+    }
+  }, 10000);
+
   const video = document.getElementById('clipF');
   const choicesDiv = document.getElementById('choices');
   const CHOICES_SHOW_TIME = 10;

@@ -1,6 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView
 from .models import UserFilm, UserClip, UserChoice
@@ -62,3 +63,15 @@ def register(request):
     else:
         form = UserCreationForm()
     return render(request, 'user_content/register.html', {'form': form})
+
+@login_required
+def edit_clip(request, pk):
+    clip = get_object_or_404(UserClip, pk=pk, film__user=request.user)
+    if request.method == 'POST':
+        # Handle form submission for edits (e.g., start/end times)
+        clip.edit_start = request.POST.get('edit_start')
+        clip.edit_end = request.POST.get('edit_end')
+        # Save other edits as needed
+        clip.save()
+        return redirect('user_content:film_detail', pk=clip.film_id)
+    return render(request, 'user_content/edit_clip.html', {'clip': clip})

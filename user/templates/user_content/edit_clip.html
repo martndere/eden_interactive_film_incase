@@ -1,0 +1,15 @@
+{% extends "eden/base_clip.html" %}
+{% block title %}Edit Clip{% endblock %}
+
+{% block content %}
+  <h2>Edit Video Clip</h2>
+  <video id="editorVideo" src="{{ clip.video.url }}" controls style="width:100%;max-width:600px;"></video>
+  <form method="post">
+    {% csrf_token %}
+    <label>Start Time (seconds): <input type="number" step="0.1" name="edit_start" value="{{ clip.edit_start }}"></label><br>
+    <label>End Time (seconds): <input type="number" step="0.1" name="edit_end" value="{{ clip.edit_end }}"></label><br>
+    <!-- Add more editing controls as needed -->
+    <button type="submit">Save Edits</button>
+  </form>
+  <a href="{% url 'edit_clip' clip.pk %}">Edit this clip</a>
+{% endblock %}
