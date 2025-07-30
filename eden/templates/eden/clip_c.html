@@ -8,7 +8,12 @@
     <h1 class="main-title">{{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipC" class="clip-video" controls>
+      <video id="clipC"
+             class="clip-video"
+             controls
+             data-choices-show-time="91"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-1">
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -30,22 +35,16 @@
     <div id="choices" style="display:none;">
       <h2 class="subtitle">What do you want to investigate?</h2>
       <div class="choices">
-        <button
-          class="choice-link"
-          id="choice-camera"
-          hx-get="{% url 'clip_detail' 'clip_g' %}"
-          hx-target="#main-content"
-          hx-swap="innerHTML">
-          One Camera Unsynched.
-        </button>
-        <button
-          class="choice-link"
-          id="choice-toxicology"
-          hx-get="{% url 'clip_detail' 'clip_e' %}"
-          hx-target="#main-content"
-          hx-swap="innerHTML">
-          Toxicology Report Available.
-        </button>
+        {% for choice in choices %}
+          <button
+            class="choice-link"
+            id="choice-{{ forloop.counter }}"
+            hx-get="{% url 'eden:clip_detail' choice.to_clip.slug %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML">
+            {{ choice.label }}
+          </button>
+        {% endfor %}
       </div>
     </div>
   </div>
@@ -53,64 +52,14 @@
 
 {% block extra_scripts %}
 <script>
-  // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-
-function setupClipC() {
-  const video = document.getElementById('clipC');
-  const choicesDiv = document.getElementById('choices');
-  const choiceButtons = choicesDiv ? choicesDiv.querySelectorAll('.choice-link') : [];
-  const IDLE_TIMEOUT = 10 * 1000;
-  const CHOICES_SHOW_TIME = 91;
-
-  let choicesShown = false;
-  let idleTimer = null;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'block';
-      choicesShown = true;
-
-      idleTimer = setTimeout(() => {
-        const toxicologyBtn = document.getElementById('choice-toxicology');
-        if (toxicologyBtn) toxicologyBtn.click();
-      }, IDLE_TIMEOUT);
-    }
-
-    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      choicesShown = false;
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    }
+  document.addEventListener('DOMContentLoaded', () => {
+    // Fade out the ticker after 10 seconds
+    setTimeout(function() {
+      var ticker = document.getElementById('newsTicker');
+      if (ticker) ticker.classList.add('fade-out');
+    }, 10000);
+    // Initialize the clip logic for the first page load
+    setupInteractiveClip();
   });
-
-  choiceButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    });
-  });
-}
-
-setupClipC();
-
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-  if (document.getElementById('clipC')) {
-    setupClipC();
-  }
-});
 </script>
 {% endblock %}

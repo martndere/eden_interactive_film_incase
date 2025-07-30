@@ -6,5 +6,5 @@
   {{ form.as_p }}
   <button type="submit">Save Choice</button>
 </form>
-<a href="{% url 'user_content:film_detail' form.instance.from_clip.film.pk %}">Back to Film</a>
+<a href="{% url 'user:film_detail' form.instance.from_clip.film.pk %}">Back to Film</a>
 {% endblock %}

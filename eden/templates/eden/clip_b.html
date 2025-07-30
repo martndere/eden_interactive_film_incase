@@ -34,7 +34,7 @@
     <div class="mini-choice-strip">
       {% for choice in choices %}
         <button class="mini-choice-link"
-                hx-get="{% url 'clip_detail' choice.to_clip.slug %}"
+                hx-get="{% url 'eden:clip_detail' choice.to_clip.slug %}"
                 hx-target="#main-content"
                 hx-swap="innerHTML">
           {% if choice.image %}
@@ -62,7 +62,7 @@
     const voicePrompt = document.getElementById('voicePrompt');
     const choicesDiv = document.getElementById('choices');
 
-    const CHOICES_SHOW_TIME = 5.0;
+    const CHOICES_SHOW_TIME = 10.0;
     let audioPlayed = false;
     let choicesShown = false;
 

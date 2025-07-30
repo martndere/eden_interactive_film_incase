@@ -34,7 +34,7 @@
       <button
         class="choice-link"
         id="choose-another"
-        hx-get="{% url 'clip_detail' 'clip_a' %}"
+        hx-get="{% url 'eden:clip_detail' 'clip_a' %}"
         hx-target="#main-content"
         hx-swap="innerHTML">
         CHOOSE ANOTHER SUSPECT
@@ -55,7 +55,7 @@
   <div class="build-your-story-cta">
     <h2>Inspired? Build Your Own Interactive Story!</h2>
     <p>Continue the adventure by creating your own film and sharing it with others.</p>
-    <a href="{% url 'user_content:film_create' %}" class="cta-button">Start Your Story</a>
+    <a href="{% url 'user:film_create' %}" class="cta-button">Start Your Story</a>
   </div>
 {% endblock %}
 

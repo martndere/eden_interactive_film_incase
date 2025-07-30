@@ -16,12 +16,15 @@
           <p>No video uploaded yet.</p>
         {% endif %}
 
-        <p>{{ clip.description }}</p>
+        <p>{{ clip.description|truncatewords:20 }}</p>
 
         {% if request.user.is_staff %}
-          <form hx-post="/api/clips/delete/{{ clip.id }}/" 
-                hx-target="#clip-list"
-                hx-swap="innerHTML">
+          <form method="POST"
+                hx-post="{% url 'delete_clip' clip.id %}"
+                hx-get="/api/clips/html/"
+                hx-target="#clip-strip-container"
+                hx-swap="innerHTML"
+                onsubmit="return confirm('Delete this clip?')">
             {% csrf_token %}
             <button type="submit">🗑️ Delete</button>
           </form>
@@ -38,9 +41,8 @@
 <script>
   function scrollClipList(direction) {
     const container = document.getElementById('clip-scroll-row');
-    const scrollAmount = 300;
     container.scrollBy({
-      left: direction * scrollAmount,
+      left: direction * 300,
       behavior: 'smooth'
     });
   }
@@ -54,9 +56,7 @@
         video.pause();
       }
     });
-  }, {
-    threshold: 0.5
-  });
+  }, { threshold: 0.6 });
 
   document.querySelectorAll('.clip-video').forEach(video => {
     observer.observe(video);

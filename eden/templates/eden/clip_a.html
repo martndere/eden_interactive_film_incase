@@ -17,7 +17,7 @@
     {% if choices %}
       {% with next_clip=choices.0.to_clip.slug %}
         <button id="pressPlayBtn"
-                hx-get="{% url 'clip_detail' next_clip %}"
+                hx-get="{% url 'eden:clip_detail' next_clip %}"
                 hx-target="#main-content"
                 hx-swap="innerHTML"
                 style="display:none;">

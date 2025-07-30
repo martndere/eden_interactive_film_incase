@@ -8,7 +8,12 @@
     <h1 class="main-title">{{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipG" class="clip-video" controls>
+      <video id="clipG" class="clip-video" controls
+             data-choices-selector="#choices"
+             data-choices-show-time="40"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-more"
+      >
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -30,7 +35,7 @@
       <button
         class="choice-link"
         id="choice-crime"
-        hx-get="{% url 'clip_detail' 'clip_h' %}"
+        hx-get="{% url 'eden:clip_detail' 'clip_h' %}"
         hx-target="#main-content"
         hx-swap="innerHTML">
         VIEW CRIME SCENE
@@ -38,7 +43,7 @@
       <button
         class="choice-link"
         id="choice-more"
-        hx-get="{% url 'clip_detail' 'clip_f' %}"
+        hx-get="{% url 'eden:clip_detail' 'clip_f' %}"
         hx-target="#main-content"
         hx-swap="innerHTML">
         VIEW MORE EVIDENCE

@@ -21,8 +21,8 @@
 
   <div id="main-content" class="start-button-container">
     <a 
-      href="{% url 'clip_a' %}" 
-      hx-get="{% url 'clip_a' %}" 
+      href="{% url 'eden:clip_detail' 'clip_a' %}" 
+      hx-get="{% url 'eden:clip_detail' 'clip_a' %}" 
       hx-target="#main-content" 
       hx-swap="innerHTML">
       <button class="watch-button">▶ Watch Clip A</button>

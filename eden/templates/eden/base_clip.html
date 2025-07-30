@@ -18,12 +18,12 @@
 <body>
   <header>
     <nav>
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'eden:home' %}">Home</a>
       {% if user.is_authenticated %}
         <span>Welcome, {{ user.username }}!</span>
-        <a href="{% url 'user_content:my_films' %}">My Films</a>
-        <a href="{% url 'user_content:film_create' %}">Create Film</a>
-        <!-- <a href="{% url 'user_content:profile' %}">Profile</a> -->
+        <a href="{% url 'user:my_films' %}">My Films</a>
+        <a href="{% url 'user:film_create' %}">Create Film</a>
+        <a href="{% url 'user:profile' %}">Profile</a>
         <a href="{% url 'logout' %}">Logout</a>
       {% else %}
         <a href="{% url 'login' %}">Login</a>
@@ -45,6 +45,56 @@
     {% endblock %}
   </footer>
 
+  <script>
+    function setupInteractiveClip(video) {
+      if (!video || video.dataset.initialized) return;
+      video.dataset.initialized = 'true';
+
+      const choicesSelector = video.dataset.choicesSelector;
+      const choicesDiv = choicesSelector ? document.querySelector(choicesSelector) : null;
+      const showTime = parseFloat(video.dataset.choicesShowTime);
+      const idleTimeout = parseInt(video.dataset.idleTimeoutMs, 10);
+      const idleChoiceSelector = video.dataset.idleChoiceSelector;
+
+      let choicesShown = false;
+      let idleTimer = null;
+
+      if (choicesDiv) choicesDiv.style.display = 'none';
+
+      const timeUpdateHandler = () => {
+        if (video.currentTime >= showTime && !choicesShown) {
+          if (choicesDiv) choicesDiv.style.display = 'flex'; // Use flex for better centering
+          video.pause();
+          choicesShown = true;
+
+          if (idleTimeout && idleChoiceSelector) {
+            idleTimer = setTimeout(() => {
+              const idleChoice = document.querySelector(idleChoiceSelector);
+              if (idleChoice) idleChoice.click();
+            }, idleTimeout);
+          }
+        }
+      };
+
+      video.addEventListener('timeupdate', timeUpdateHandler);
+
+      if (choicesDiv) {
+        choicesDiv.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (idleTimer) clearTimeout(idleTimer);
+          });
+        });
+      }
+    }
+
+    // Run on initial page load
+    document.querySelectorAll('.clip-video').forEach(setupInteractiveClip);
+
+    // Run after any HTMX swap
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      evt.detail.elt.querySelectorAll('.clip-video').forEach(setupInteractiveClip);
+    });
+  </script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>

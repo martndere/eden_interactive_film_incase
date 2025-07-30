@@ -8,7 +8,12 @@
     <h1 class="main-title">{{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipD" class="clip-video" controls>
+      <video id="clipD" class="clip-video" controls
+             data-choices-selector="#choices"
+             data-choices-show-time="13"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-suspect-a"
+      >
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -30,7 +35,7 @@
       <button
         class="choice-link"
         id="choice-suspect-a"
-        hx-get="{% url 'clip_detail' 'clip_f' %}"
+        hx-get="{% url 'eden:clip_detail' 'clip_f' %}"
         hx-target="#main-content"
         hx-swap="innerHTML">
         FOLLOW SUSPECT
@@ -38,7 +43,7 @@
       <button
         class="choice-link"
         id="choice-suspect-b"
-        hx-get="{% url 'clip_detail' 'clip_g' %}"
+        hx-get="{% url 'eden:clip_detail' 'clip_g' %}"
         hx-target="#main-content"
         hx-swap="innerHTML">
         FOLLOW SUSPECT B
@@ -48,71 +53,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-function setupClipD() {
-  const video = document.getElementById('clipD');
-  const choicesDiv = document.getElementById('choices');
-  const suspectA = document.getElementById('choice-suspect-a');
-  const suspectB = document.getElementById('choice-suspect-b');
-  const CHOICES_SHOW_TIME = 13;
-  const IDLE_TIMEOUT = 10000;
-
-  video._choicesShown = video._choicesShown || false;
-  video._idleTimer = video._idleTimer || null;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  if (video._clipDHandler) {
-    video.removeEventListener('timeupdate', video._clipDHandler);
-  }
-
-  video._clipDHandler = function() {
-    if (video.currentTime >= CHOICES_SHOW_TIME && !video._choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'flex';
-      video.pause();
-      video._choicesShown = true;
-
-      video._idleTimer = setTimeout(() => {
-        if (suspectA) suspectA.click();
-      }, IDLE_TIMEOUT);
-    }
-
-    if (video.currentTime < CHOICES_SHOW_TIME && video._choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      video._choicesShown = false;
-      if (video._idleTimer) {
-        clearTimeout(video._idleTimer);
-        video._idleTimer = null;
-      }
-    }
-  };
-
-  video.addEventListener('timeupdate', video._clipDHandler);
-
-  [suspectA, suspectB].forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (video._idleTimer) {
-        clearTimeout(video._idleTimer);
-        video._idleTimer = null;
-      }
-    });
-  });
-}
-
-setupClipD();
-
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-  if (document.getElementById('clipD')) {
-    setupClipD();
-  }
-});
-</script>
 {% endblock %}

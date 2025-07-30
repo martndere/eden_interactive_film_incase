@@ -8,7 +8,7 @@ from .models import UserFilm, UserClip, UserChoice
 
 class UserFilmListView(LoginRequiredMixin, ListView):
     model = UserFilm
-    template_name = 'user_content/my_films.html'
+    template_name = 'user/my_films.html'
     context_object_name = 'films'
 
     def get_queryset(self):
@@ -17,8 +17,8 @@ class UserFilmListView(LoginRequiredMixin, ListView):
 class UserFilmCreateView(LoginRequiredMixin, CreateView):
     model = UserFilm
     fields = ['title', 'description', 'is_public']
-    template_name = 'user_content/film_form.html'
-    success_url = reverse_lazy('user_content:my_films')
+    template_name = 'user/film_form.html'
+    success_url = reverse_lazy('user:my_films')
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -26,25 +26,25 @@ class UserFilmCreateView(LoginRequiredMixin, CreateView):
 
 class UserFilmDetailView(LoginRequiredMixin, DetailView):
     model = UserFilm
-    template_name = 'user_content/film_detail.html'
+    template_name = 'user/film_detail.html'
     context_object_name = 'film'
 
 class UserClipCreateView(LoginRequiredMixin, CreateView):
     model = UserClip
     fields = ['name', 'video', 'thumbnail', 'narrative', 'prompt_time', 'audio_prompt', 'order']
-    template_name = 'user_content/clip_form.html'
+    template_name = 'user/clip_form.html'
 
     def form_valid(self, form):
         form.instance.film_id = self.kwargs['film_id']
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('user_content:film_detail', kwargs={'pk': self.kwargs['film_id']})
+        return reverse_lazy('user:film_detail', kwargs={'pk': self.kwargs['film_id']})
 
 class UserChoiceCreateView(LoginRequiredMixin, CreateView):
     model = UserChoice
     fields = ['to_clip', 'label', 'order']
-    template_name = 'user_content/choice_form.html'
+    template_name = 'user/choice_form.html'
 
     def form_valid(self, form):
         form.instance.from_clip_id = self.kwargs['clip_id']
@@ -52,7 +52,7 @@ class UserChoiceCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         clip = UserClip.objects.get(pk=self.kwargs['clip_id'])
-        return reverse_lazy('user_content:film_detail', kwargs={'pk': clip.film_id})
+        return reverse_lazy('user:film_detail', kwargs={'pk': clip.film_id})
 
 def register(request):
     if request.method == 'POST':
@@ -62,7 +62,7 @@ def register(request):
             return redirect('login')
     else:
         form = UserCreationForm()
-    return render(request, 'user_content/register.html', {'form': form})
+    return render(request, 'user/register.html', {'form': form})
 
 @login_required
 def edit_clip(request, pk):
@@ -73,5 +73,9 @@ def edit_clip(request, pk):
         clip.edit_end = request.POST.get('edit_end')
         # Save other edits as needed
         clip.save()
-        return redirect('user_content:film_detail', pk=clip.film_id)
-    return render(request, 'user_content/edit_clip.html', {'clip': clip})
+        return redirect('user:film_detail', pk=clip.film_id)
+    return render(request, 'user/edit_clip.html', {'clip': clip})
+
+@login_required
+def profile(request):
+    return render(request, 'user/profile.html')
