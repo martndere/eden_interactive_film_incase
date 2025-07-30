@@ -11,7 +11,8 @@
       <video id="clipC"
              class="clip-video"
              controls
-             data-choices-show-time="91"
+             data-choices-selector="#choices"
+             data-choices-show-time="{{ clip.prompt_time|default:999 }}"
              data-idle-timeout-ms="10000"
              data-idle-choice-selector="#choice-1">
         <source src="{{ clip.video.url }}" type="video/mp4">
@@ -51,15 +52,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Fade out the ticker after 10 seconds
-    setTimeout(function() {
-      var ticker = document.getElementById('newsTicker');
-      if (ticker) ticker.classList.add('fade-out');
-    }, 10000);
-    // Initialize the clip logic for the first page load
-    setupInteractiveClip();
-  });
-</script>
 {% endblock %}

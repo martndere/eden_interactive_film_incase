@@ -8,7 +8,11 @@
   <h1 class="main-title">{{ clip.name }}</h1>
 
   <div class="video-player">
-    <video id="clipB" class="clip-video" controls>
+    <video id="clipB" class="clip-video" controls
+           data-choices-selector="#choices"
+           data-choices-show-time="20"
+           data-audio-prompt-selector="#voicePrompt"
+    >
       <source src="{{ clip.video.url }}" type="video/mp4">
       Your browser does not support the video tag.
     </video>
@@ -48,55 +52,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-  function setupClipB() {
-    const video = document.getElementById('clipB');
-    const voicePrompt = document.getElementById('voicePrompt');
-    const choicesDiv = document.getElementById('choices');
-
-    const CHOICES_SHOW_TIME = 10.0;
-    let audioPlayed = false;
-    let choicesShown = false;
-
-    if (choicesDiv) choicesDiv.style.display = 'none';
-
-    video.addEventListener('timeupdate', () => {
-      const currentTime = video.currentTime;
-
-      if (currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-        if (choicesDiv) choicesDiv.style.display = 'block';
-        video.pause();
-        choicesShown = true;
-        if (!audioPlayed) {
-          voicePrompt.play();
-          audioPlayed = true;
-        }
-      }
-
-      if (currentTime < CHOICES_SHOW_TIME && (audioPlayed || choicesShown)) {
-        voicePrompt.pause();
-        voicePrompt.currentTime = 0;
-        audioPlayed = false;
-        if (choicesDiv) choicesDiv.style.display = 'none';
-        choicesShown = false;
-      }
-    });
-  }
-
-  setupClipB();
-
-  document.body.addEventListener('htmx:afterSwap', function () {
-    if (document.getElementById('clipB')) {
-      setupClipB();
-    }
-  });
-</script>
 {% endblock %}

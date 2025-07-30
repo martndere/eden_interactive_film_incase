@@ -9,8 +9,8 @@
 
     <div class="video-player">
       <video id="clipG" class="clip-video" controls
-             data-choices-selector="#choices"
-             data-choices-show-time="40"
+             data-choices-selector="#choices"             
+             data-choices-show-time="{{ clip.prompt_time|default:40 }}"
              data-idle-timeout-ms="10000"
              data-idle-choice-selector="#choice-more"
       >
@@ -53,71 +53,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-
- // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-function setupClipG() {
-  const video = document.getElementById('clipG');
-  const choicesDiv = document.getElementById('choices');
-  const crimeBtn = document.getElementById('choice-crime');
-  const moreBtn = document.getElementById('choice-more');
-  const CHOICES_SHOW_TIME = 40;
-  const IDLE_TIMEOUT = 10000;
-
-  let choicesShown = false;
-  let idleTimer = null;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'flex';
-      video.pause();
-      choicesShown = true;
-
-      idleTimer = setTimeout(() => {
-        if (moreBtn) {
-          moreBtn.click();
-        }
-      }, IDLE_TIMEOUT);
-    }
-
-    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      choicesShown = false;
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    }
-  });
-
-  [crimeBtn, moreBtn].forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    });
-  });
-}
-
-if (!window._clipGSetup) {
-  setupClipG();
-  window._clipGSetup = true;
-}
-
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-  if (document.getElementById('clipG')) {
-    setupClipG();
-  }
-});
-</script>
 {% endblock %}

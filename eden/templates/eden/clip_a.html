@@ -8,23 +8,28 @@
     <h1 class="main-title">🎥 {{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipA" class="clip-video" controls>
+      <video id="clipA"
+             class="clip-video"
+             controls
+             data-choices-selector="#choices"
+             data-choices-show-time="{{ clip.prompt_time|default:29 }}"
+             data-audio-play-time="33"
+             data-audio-prompt-selector="#voicePrompt"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-1">
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
     </div>
 
-    {% if choices %}
-      {% with next_clip=choices.0.to_clip.slug %}
-        <button id="pressPlayBtn"
-                hx-get="{% url 'eden:clip_detail' next_clip %}"
+    <div id="choices" style="display:none;">
+      {% for choice in choices %}
+        <button id="choice-{{ forloop.counter }}" class="choice-link"
+                hx-get="{% url 'eden:clip_detail' choice.to_clip.slug %}"
                 hx-target="#main-content"
-                hx-swap="innerHTML"
-                style="display:none;">
-          ▶️ Press Play
-        </button>
-      {% endwith %}
-    {% endif %}
+                hx-swap="innerHTML">{{ choice.label }}</button>
+      {% endfor %}
+    </div>
 
     <!-- News ticker below choice button -->
     <div class="news-ticker-container" id="newsTicker">
@@ -44,70 +49,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-  const video = document.getElementById('clipA');
-  const pressPlayBtn = document.getElementById('pressPlayBtn');
-  const voicePrompt = document.getElementById('voicePrompt');
-
-  const AUDIO_TRIGGER_TIME = 20.0;
-  const BUTTON_SHOW_TIME = 30.0;
-  const IDLE_TIMEOUT = 10000;
-
-  let audioPlayed = false;
-  let buttonShown = false;
-  let idleTimer = null;
-
-  if (pressPlayBtn) pressPlayBtn.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    const currentTime = video.currentTime;
-
-    if (currentTime >= AUDIO_TRIGGER_TIME && !audioPlayed) {
-      voicePrompt.play();
-      audioPlayed = true;
-    }
-
-    if (currentTime >= BUTTON_SHOW_TIME && !buttonShown) {
-      if (pressPlayBtn) pressPlayBtn.style.display = 'block';
-      video.pause();
-      buttonShown = true;
-
-      idleTimer = setTimeout(() => {
-        window.location.reload();
-      }, IDLE_TIMEOUT);
-    }
-
-    if (currentTime < AUDIO_TRIGGER_TIME) {
-      voicePrompt.pause();
-      voicePrompt.currentTime = 0;
-      audioPlayed = false;
-    }
-
-    if (currentTime < BUTTON_SHOW_TIME && buttonShown) {
-      if (pressPlayBtn) pressPlayBtn.style.display = 'none';
-      buttonShown = false;
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    }
-  });
-
-  if (pressPlayBtn) {
-    pressPlayBtn.addEventListener('click', () => {
-      if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
-      }
-    });
-  }
-</script>
 {% endblock %}

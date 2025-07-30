@@ -8,7 +8,12 @@
     <h1 class="main-title">{{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipF" class="clip-video" controls>
+      <video id="clipF" class="clip-video" controls
+             data-choices-selector="#choices"
+             data-choices-show-time="16"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-1"
+      >
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -26,47 +31,26 @@
 
     <p class="subtitle">{{ clip.description }}</p>
 
-    <div id="choices" style="display:none; margin-top:1em; text-align:center;" class="choices">
-      <button
-        class="choice-link"
-        id="choice-playback"
-        hx-get="{% url 'eden:clip_detail' 'clip_g' %}"
-        hx-target="#main-content"
-        hx-swap="innerHTML">
-        PLAYBACK
-      </button>
+    <!-- Choices (hidden by default) -->
+    <div id="choices" style="display:none;">
+      <h2 class="subtitle">What do you want to do?</h2>
+      <div class="choices">
+        {% for choice in choices %}
+          <button
+            class="choice-link"
+            id="choice-{{ forloop.counter }}"
+            hx-get="{% url 'eden:clip_detail' choice.to_clip.slug %}"
+            hx-target="#main-content"
+            hx-swap="innerHTML">
+            {{ choice.label }}
+          </button>
+        {% empty %}
+          <p>No choices available for this clip.</p>
+        {% endfor %}
+      </div>
     </div>
   </div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-
-   // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-
-  const video = document.getElementById('clipF');
-  const choicesDiv = document.getElementById('choices');
-  const CHOICES_SHOW_TIME = 10;
-  let choicesShown = false;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'block';
-      choicesShown = true;
-    }
-
-    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      choicesShown = false;
-    }
-  });
-</script>
 {% endblock %}

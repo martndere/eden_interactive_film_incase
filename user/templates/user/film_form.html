@@ -1,0 +1,10 @@
+{% extends "eden/base_clip.html" %}
+{% block content %}
+  <h2>{% if object %}Edit Film{% else %}Create New Film{% endif %}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Film</button>
+  </form>
+  <a href="{% url 'user:my_films' %}">Cancel</a>
+{% endblock %}

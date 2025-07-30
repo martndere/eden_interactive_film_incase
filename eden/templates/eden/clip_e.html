@@ -8,7 +8,11 @@
     <h1 class="main-title">{{ clip.name }}</h1>
 
     <div class="video-player">
-      <video id="clipE" class="clip-video" controls>
+      <video id="clipE" class="clip-video" controls
+             data-choices-selector="#choices"
+             data-choices-show-time="{{ clip.prompt_time|default:105 }}"
+             data-idle-timeout-ms="10000"
+             data-idle-choice-selector="#choice-a">
         <source src="{{ clip.video.url }}" type="video/mp4">
         Your browser does not support the video tag.
       </video>
@@ -51,33 +55,4 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-
-   // Fade out the ticker after 10 seconds
-  setTimeout(function() {
-    var ticker = document.getElementById('newsTicker');
-    if (ticker) {
-      ticker.classList.add('fade-out');
-    }
-  }, 10000);
-  
-  const video = document.getElementById('clipE');
-  const choicesDiv = document.getElementById('choices');
-  const CHOICES_SHOW_TIME = 105;
-  let choicesShown = false;
-
-  if (choicesDiv) choicesDiv.style.display = 'none';
-
-  video.addEventListener('timeupdate', () => {
-    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'block';
-      choicesShown = true;
-    }
-
-    if (video.currentTime < CHOICES_SHOW_TIME && choicesShown) {
-      if (choicesDiv) choicesDiv.style.display = 'none';
-      choicesShown = false;
-    }
-  });
-</script>
 {% endblock %}

@@ -55,17 +55,31 @@
       const showTime = parseFloat(video.dataset.choicesShowTime);
       const idleTimeout = parseInt(video.dataset.idleTimeoutMs, 10);
       const idleChoiceSelector = video.dataset.idleChoiceSelector;
+      const audioPlayTime = parseFloat(video.dataset.audioPlayTime);
+      const audioPromptSelector = video.dataset.audioPromptSelector;
+      const audioPrompt = audioPromptSelector ? document.querySelector(audioPromptSelector) : null;
 
       let choicesShown = false;
       let idleTimer = null;
+      let audioPlayed = false;
 
       if (choicesDiv) choicesDiv.style.display = 'none';
 
       const timeUpdateHandler = () => {
-        if (video.currentTime >= showTime && !choicesShown) {
-          if (choicesDiv) choicesDiv.style.display = 'flex'; // Use flex for better centering
+        if (showTime && video.currentTime >= showTime && !choicesShown) {
+          if (choicesDiv) {
+            // Use flex for robust vertical and horizontal centering
+            choicesDiv.style.display = 'flex';
+            choicesDiv.style.flexDirection = 'column';
+            choicesDiv.style.alignItems = 'center';
+          }
           video.pause();
           choicesShown = true;
+
+          if (audioPrompt && !audioPlayed) {
+            audioPrompt.play();
+            audioPlayed = true;
+          }
 
           if (idleTimeout && idleChoiceSelector) {
             idleTimer = setTimeout(() => {
@@ -73,6 +87,11 @@
               if (idleChoice) idleChoice.click();
             }, idleTimeout);
           }
+        }
+
+        if (audioPlayTime && video.currentTime >= audioPlayTime && !audioPlayed) {
+            if (audioPrompt) audioPrompt.play();
+            audioPlayed = true;
         }
       };
 
@@ -87,12 +106,23 @@
       }
     }
 
-    // Run on initial page load
-    document.querySelectorAll('.clip-video').forEach(setupInteractiveClip);
+    function initializeContent(scope) {
+      // Set up all interactive videos within the scope
+      scope.querySelectorAll('.clip-video:not([data-initialized])').forEach(setupInteractiveClip);
 
-    // Run after any HTMX swap
+      // Set up the news ticker fade-out if it exists in the scope
+      const ticker = scope.querySelector('#newsTicker:not([data-initialized])');
+      if (ticker) {
+        ticker.dataset.initialized = 'true';
+        setTimeout(() => ticker.classList.add('fade-out'), 10000);
+      }
+    }
+
+    // Run on initial page load for the whole document
+    document.addEventListener('DOMContentLoaded', () => initializeContent(document));
+    // Run after any HTMX swap for the new content
     document.body.addEventListener('htmx:afterSwap', function(evt) {
-      evt.detail.elt.querySelectorAll('.clip-video').forEach(setupInteractiveClip);
+      initializeContent(evt.detail.elt);
     });
   </script>
   {% block extra_scripts %}{% endblock %}
