@@ -12,9 +12,10 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='user/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
     path('user/', include('user.urls')),
+    path('interact_3d/', include('interact_3d.urls', namespace='interact_3d')),
     path('', include('eden.urls')),
+    
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,0 +1,157 @@
+{% load static %}
+
+<!-- STYLES for the viewer window -->
+<style>
+  .viewer-window {
+    position: absolute; top: 20px; left: 20px; width: 450px; height: 350px;
+    background-color: #f0f0e0; /* Creamy white */
+    border: 1px solid #aaa; border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 15px rgba(255, 255, 224, 0.4); /* Shadow + Neon glow */
+    z-index: 1000; display: flex; flex-direction: column;
+    resize: both; overflow: hidden; min-width: 300px; min-height: 250px;
+  }
+  .viewer-header {
+    padding: 5px 10px; background-color: #ddd; cursor: move; border-bottom: 1px solid #ccc;
+    display: flex; justify-content: space-between; align-items: center; user-select: none;
+  }
+  .viewer-header .close-button { cursor: pointer; font-size: 20px; font-weight: bold; }
+  #3d-viewer-container { flex-grow: 1; }
+  .evidence-button { margin-top: 15px; }
+</style>
+
+<!-- HTML for the viewer window and its trigger button -->
+<div id="3d-viewer-window" class="viewer-window" style="display: none;">
+    <div class="viewer-header">
+        <span>Interactive Evidence</span>
+        <span class="close-button">&times;</span>
+    </div>
+    <div id="3d-viewer-container">
+        <!-- Three.js Canvas will be inserted here -->
+    </div>
+</div>
+
+<div class="choices">
+    <button id="examine-evidence-btn" class="choice-link evidence-button">Examine Evidence</button>
+</div>
+
+<!-- SCRIPT for the viewer functionality -->
+{{ model_url|json_script:"model-url-data" }}
+{{ scene_config|json_script:"scene-config-data" }}
+
+<script type="module">
+    // This script is designed to be included once per page.
+    // A global flag prevents re-initialization on htmx swaps.
+    if (!window.is3DViewerInitialized) {
+        window.is3DViewerInitialized = true;
+
+        import * as THREE from '{% static "js/three/three.module.js" %}';
+        import { GLTFLoader } from '{% static "js/three/jsm/loaders/GLTFLoader.js" %}';
+        import { OrbitControls } from '{% static "js/three/jsm/controls/OrbitControls.js" %}';
+
+        let viewerCanvasInitialized = false;
+
+        function init3DViewer() {
+            if (viewerCanvasInitialized) return;
+            
+            const modelUrl = JSON.parse(document.getElementById('model-url-data').textContent);
+            const sceneConfig = JSON.parse(document.getElementById('scene-config-data').textContent);
+            const container = document.getElementById('3d-viewer-container');
+
+            if (!container) {
+                console.error("3D viewer container not found.");
+                return;
+            }
+            // Clear container in case of re-initialization and mark as initialized
+            container.innerHTML = '';
+            viewerCanvasInitialized = true;
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(sceneConfig.backgroundColor || 0xf0f0e0);
+
+            const camera = new THREE.PerspectiveCamera(sceneConfig.cameraFov || 75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 4);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            const loader = new GLTFLoader();
+            loader.load(modelUrl, (gltf) => {
+                const model = gltf.scene;
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+                scene.add(model);
+            }, undefined, (error) => {
+                console.error('An error happened while loading the model:', error);
+                container.innerHTML = `<p style="color:red; padding: 1em;">Failed to load model.</p>`;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            const resizeObserver = new ResizeObserver(() => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+            resizeObserver.observe(container);
+        }
+
+        function makeDraggable(element, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            handle.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX; pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                pos3 = e.clientX; pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null; document.onmousemove = null;
+            }
+        }
+
+        function setupWindowControls() {
+            const viewerWindow = document.getElementById('3d-viewer-window');
+            const openBtn = document.getElementById('examine-evidence-btn');
+            if (!viewerWindow || !openBtn) return;
+
+            const closeBtn = viewerWindow.querySelector('.close-button');
+            const header = viewerWindow.querySelector('.viewer-header');
+
+            openBtn.onclick = () => { viewerWindow.style.display = 'flex'; init3DViewer(); };
+            closeBtn.onclick = () => { viewerWindow.style.display = 'none'; };
+            makeDraggable(viewerWindow, header);
+        }
+
+        const initModule = () => document.getElementById('3d-viewer-window') && setupWindowControls();
+        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initModule) : initModule();
+        document.body.addEventListener('htmx:afterSwap', initModule);
+    }
+</script>
