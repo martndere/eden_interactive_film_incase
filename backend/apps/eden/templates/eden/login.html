@@ -1,0 +1,31 @@
+{% extends "eden/base_clip.html" %}
+
+{% block title %}Login | EDEN Interactive Film{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <h1 class="main-title">Login</h1>
+  <p class="subtitle">Welcome back. Enter your credentials to continue.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    
+    {% if form.non_field_errors %}
+      <div class="errorlist">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% for field in form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn-primary">Login</button>
+  </form>
+  <p style="margin-top: 1rem; text-align: center;">Don't have an account? <a href="{% url 'user:register' %}">Register here</a>.</p>
+</div>
+{% endblock %}

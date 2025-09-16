@@ -1,0 +1,63 @@
+{% load static %}
+
+<div id="video-wrapper-{{ clip.id }}" class="video-container">
+  <div id="play-button-overlay-{{ clip.id }}" class="play-button-overlay" style="display: none;">
+    <button class="play-button">▶</button>
+  </div>
+
+  <video 
+    id="video-{{ clip.id }}" 
+    class="clip-video" 
+    src="{{ clip.video.url }}" 
+    autoplay
+    muted
+    playsinline
+    data-choices-selector="#choices-{{ clip.id }}"
+    data-choices-show-time="{{ clip.prompt_time }}"
+    {% if clip.audio_prompt %}
+      data-audio-prompt-selector="#audio-prompt-{{ clip.id }}"
+    {% endif %}
+  >
+    Your browser does not support the video tag.
+  </video>
+
+  {% if clip.audio_prompt %}
+    <audio id="audio-prompt-{{ clip.id }}" src="{{ clip.audio_prompt.url }}" preload="auto"></audio>
+  {% endif %}
+
+  <div id="choices-{{ clip.id }}" class="choices-overlay" style="display: none;">
+    {% for choice in choices %}
+      <a 
+        href="{% url 'eden:clip_detail' choice.to_clip.slug %}" 
+        hx-get="{% url 'eden:clip_detail' choice.to_clip.slug %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+        hx-push-url="true"
+        class="choice-button">
+        {{ choice.label }}
+      </a>
+    {% empty %}
+      <p>The story ends here... for now.</p>
+    {% endfor %}
+  </div>
+
+  <div id="controls-{{ clip.id }}" class="video-controls">
+    <div id="progress-bar-{{ clip.id }}" class="progress-bar">
+      <div id="progress-fill-{{ clip.id }}" class="progress-fill"></div>
+    </div>
+    <div class="controls-bottom-bar">
+      <div class="controls-left">
+        <button id="play-pause-{{ clip.id }}" class="control-button">❚❚</button>
+        <button id="seek-back-{{ clip.id }}" class="control-button">« 10s</button>
+        <button id="seek-fwd-{{ clip.id }}" class="control-button">10s »</button>
+        <button id="volume-{{ clip.id }}" class="control-button">🔊</button>
+      </div>
+      <div class="controls-center">
+        <span id="current-time-{{ clip.id }}">0:00</span> / <span id="duration-{{ clip.id }}">0:00</span>
+      </div>
+      <div class="controls-right">
+        <button id="fullscreen-{{ clip.id }}" class="control-button">⛶</button>
+      </div>
+    </div>
+  </div>
+</div>

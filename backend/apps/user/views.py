@@ -1,0 +1,99 @@
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView
+from .models import UserFilm, UserClip, UserChoice
+from .forms import EditClipForm
+
+class UserFilmListView(LoginRequiredMixin, ListView):
+    model = UserFilm
+    template_name = 'user/my_films.html'
+    context_object_name = 'films'
+
+    def get_queryset(self):
+        return UserFilm.objects.filter(user=self.request.user)
+
+class UserFilmCreateView(LoginRequiredMixin, CreateView):
+    model = UserFilm
+    fields = ['title', 'description', 'is_public']
+    template_name = 'user/film_form.html'
+    success_url = reverse_lazy('user:my_films')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class UserFilmDetailView(LoginRequiredMixin, DetailView):
+    model = UserFilm
+    template_name = 'user/film_detail.html'
+    context_object_name = 'film'
+
+    def get_queryset(self):
+        """Ensure users can only view their own films."""
+        return super().get_queryset().filter(user=self.request.user)
+
+
+class UserClipCreateView(LoginRequiredMixin, CreateView):
+    model = UserClip
+    fields = ['name', 'video', 'thumbnail', 'narrative', 'prompt_time', 'audio_prompt', 'order']
+    template_name = 'user/clip_form.html'
+
+    def form_valid(self, form):
+        form.instance.film_id = self.kwargs['film_id']
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('user:film_detail', kwargs={'pk': self.kwargs['film_id']})
+
+class UserChoiceCreateView(LoginRequiredMixin, CreateView):
+    model = UserChoice
+    fields = ['to_clip', 'label', 'order']
+    template_name = 'user/choice_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Fetch the parent clip once and ensure the user owns it.
+        """
+        self.from_clip = get_object_or_404(UserClip, pk=self.kwargs['clip_id'], film__user=request.user)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        """
+        Limit the 'to_clip' dropdown to only show clips from the same film.
+        """
+        form = super().get_form(form_class)
+        form.fields['to_clip'].queryset = UserClip.objects.filter(film=self.from_clip.film)
+        return form
+
+    def form_valid(self, form):
+        form.instance.from_clip = self.from_clip
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('user:film_detail', kwargs={'pk': self.from_clip.film_id})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'user/register.html', {'form': form})
+
+@login_required
+def edit_clip(request, pk):
+    clip = get_object_or_404(UserClip, pk=pk, film__user=request.user)
+    form = EditClipForm(request.POST or None, instance=clip)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('user:film_detail', pk=clip.film.id)
+    
+    return render(request, 'user/edit_clip.html', {'form': form, 'clip': clip})
+
+@login_required
+def profile(request):
+    return render(request, 'user/profile.html')

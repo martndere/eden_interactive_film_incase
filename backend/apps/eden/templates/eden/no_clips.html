@@ -1,0 +1,13 @@
+{% extends "eden/base_clip.html" %}
+
+{% block title %}No Clips Found | EDEN Interactive Film{% endblock %}
+
+{% block content %}
+<div class="video-editor-container" style="text-align: center; padding: 50px;">
+  <h1 class="main-title">Content Not Found</h1>
+  <p class="subtitle">There are no video clips available to start the film.</p>
+  {% if request.user.is_staff %}
+    <p>Please log in to the <a href="{% url 'admin:index' %}">admin panel</a> to upload clips and mark one as the starting clip.</p>
+  {% endif %}
+</div>
+{% endblock %}

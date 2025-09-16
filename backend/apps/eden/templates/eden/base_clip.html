@@ -1,0 +1,229 @@
+<!-- templates/base_clip.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}EDEN Interactive Film{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'eden/css/style.css' %}">
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+  <!-- Designer: Added modern font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+  <header>
+    <nav>
+      <a href="{% url 'eden:home' %}">Home</a>
+      {% if user.is_authenticated %}
+        <span>Welcome, {{ user.username }}!</span>
+        <a href="{% url 'user:my_films' %}">My Films</a>
+        <a href="{% url 'user:film_create' %}">Create Film</a>
+        <a href="{% url 'user:profile' %}">Profile</a>
+        <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'user:register' %}">Register</a>
+      {% endif %}
+    </nav>
+    {% block header %}
+    <!-- Optional site header or logo -->
+    {% endblock %}
+  </header>
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    {% block footer %}
+    <!-- Optional footer -->
+    {% endblock %}
+  </footer>
+
+  <script>
+    function setupInteractiveClip(video) {
+        if (!video || video.dataset.initialized) return;
+        video.dataset.initialized = 'true';
+
+        // --- Get Elements ---
+        const videoId = video.id.split('-')[1];
+        const container = document.getElementById(`video-wrapper-${videoId}`);
+        const playOverlay = document.getElementById(`play-button-overlay-${videoId}`);
+        const bigPlayButton = playOverlay ? playOverlay.querySelector('button') : null;
+
+        // Interactive film elements
+        const choicesSelector = video.dataset.choicesSelector;
+        const choicesDiv = choicesSelector ? document.querySelector(choicesSelector) : null;
+        const showTime = parseFloat(video.dataset.choicesShowTime);
+        const audioPromptSelector = video.dataset.audioPromptSelector;
+        const audioPrompt = audioPromptSelector ? document.querySelector(audioPromptSelector) : null;
+
+        // Player controls
+        const controls = document.getElementById(`controls-${videoId}`);
+        const playPauseBtn = document.getElementById(`play-pause-${videoId}`);
+        const seekBackBtn = document.getElementById(`seek-back-${videoId}`);
+        const seekFwdBtn = document.getElementById(`seek-fwd-${videoId}`);
+        const volumeBtn = document.getElementById(`volume-${videoId}`);
+        const fullscreenBtn = document.getElementById(`fullscreen-${videoId}`);
+        const progressBar = document.getElementById(`progress-bar-${videoId}`);
+        const progressFill = document.getElementById(`progress-fill-${videoId}`);
+        const currentTimeEl = document.getElementById(`current-time-${videoId}`);
+        const durationEl = document.getElementById(`duration-${videoId}`);
+
+        // --- State ---
+        let choicesShown = false;
+        let audioPlayed = false;
+        let controlsTimeout;
+
+        if (choicesDiv) choicesDiv.style.display = 'none';
+
+        // --- Utility Functions ---
+        const formatTime = (timeInSeconds) => {
+            const minutes = Math.floor(timeInSeconds / 60);
+            const seconds = Math.floor(timeInSeconds % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        };
+
+        const updatePlayPauseIcon = () => {
+            if (playPauseBtn) playPauseBtn.textContent = video.paused ? '▶' : '❚❚';
+        };
+
+        const updateVolumeIcon = () => {
+            if (volumeBtn) volumeBtn.textContent = video.muted || video.volume === 0 ? '🔇' : '🔊';
+        };
+
+        // --- Event Handlers ---
+        const handleTimeUpdate = () => {
+            if (isNaN(video.duration)) return;
+            const progressPercent = (video.currentTime / video.duration) * 100;
+            if (progressFill) progressFill.style.width = `${progressPercent}%`;
+            if (currentTimeEl) currentTimeEl.textContent = formatTime(video.currentTime);
+
+            if (showTime > 0 && video.currentTime >= showTime && !choicesShown) {
+                if (choicesDiv) {
+                    choicesDiv.style.display = 'flex';
+                    choicesDiv.style.flexDirection = 'column';
+                    choicesDiv.style.alignItems = 'center';
+                }
+                video.pause();
+                choicesShown = true;
+
+                if (audioPrompt && !audioPlayed) {
+                    audioPrompt.play().catch(e => console.warn("Audio prompt play failed:", e));
+                    audioPlayed = true;
+                }
+            }
+        };
+
+        const startPlayback = () => {
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn("Autoplay was prevented. Showing play button.", error);
+                    if (playOverlay) playOverlay.style.display = 'flex';
+                    video.muted = true;
+                    updateVolumeIcon();
+                });
+            }
+        };
+
+        const onBigPlayButtonClick = () => {
+            video.muted = false;
+            video.play();
+            if (playOverlay) playOverlay.style.display = 'none';
+        };
+        
+        const onPlayPauseClick = () => { video.paused ? video.play() : video.pause(); };
+        const onVolumeClick = () => { video.muted = !video.muted; };
+        const onProgressBarClick = (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
+        };
+        const onFullscreenClick = () => {
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => alert(`Fullscreen error: ${err.message}`));
+            } else {
+                document.exitFullscreen();
+            }
+        };
+        
+        const showControls = () => {
+            if (controls) controls.classList.add('visible');
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(() => {
+                if (!video.paused) {
+                    if (controls) controls.classList.remove('visible');
+                }
+            }, 3000);
+        };
+
+        // --- Add Event Listeners ---
+        video.addEventListener('loadedmetadata', () => {
+            if (durationEl) durationEl.textContent = formatTime(video.duration);
+        });
+        video.addEventListener('timeupdate', handleTimeUpdate);
+        video.addEventListener('play', updatePlayPauseIcon);
+        video.addEventListener('pause', updatePlayPauseIcon);
+        video.addEventListener('volumechange', updateVolumeIcon);
+        video.addEventListener('pause', showControls);
+        
+        if (bigPlayButton) bigPlayButton.addEventListener('click', onBigPlayButtonClick, { once: true });
+        if (playPauseBtn) playPauseBtn.addEventListener('click', onPlayPauseClick);
+        if (volumeBtn) volumeBtn.addEventListener('click', onVolumeClick);
+        if (seekBackBtn) seekBackBtn.addEventListener('click', () => video.currentTime -= 10);
+        if (seekFwdBtn) seekFwdBtn.addEventListener('click', () => video.currentTime += 10);
+        if (fullscreenBtn) fullscreenBtn.addEventListener('click', onFullscreenClick);
+        if (progressBar) progressBar.addEventListener('click', onProgressBarClick);
+
+        if (container) {
+            container.addEventListener('mousemove', showControls);
+            container.addEventListener('mouseleave', () => {
+                clearTimeout(controlsTimeout);
+                if (!video.paused && controls) controls.classList.remove('visible');
+            });
+        }
+        
+        if (choicesDiv) {
+            choicesDiv.querySelectorAll('a.choice-button').forEach(btn => {
+                btn.addEventListener('click', () => { video.muted = false; }, { once: true });
+            });
+        }
+
+        // --- Initialisation ---
+        startPlayback();
+        updatePlayPauseIcon();
+        updateVolumeIcon();
+    }
+
+    function initializeContent(scope) {
+      // Set up all interactive videos within the scope
+      scope.querySelectorAll('.clip-video:not([data-initialized])').forEach(setupInteractiveClip);
+
+      // Set up the news ticker fade-out if it exists in the scope
+      const ticker = scope.querySelector('#newsTicker:not([data-initialized])');
+      if (ticker) {
+        ticker.dataset.initialized = 'true';
+        setTimeout(() => ticker.classList.add('fade-out'), 10000);
+      }
+    }
+
+    // Run on initial page load for the whole document
+    document.addEventListener('DOMContentLoaded', () => initializeContent(document));
+    // Run after any HTMX swap for the new content
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      initializeContent(evt.detail.elt);
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

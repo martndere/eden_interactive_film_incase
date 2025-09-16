@@ -1,0 +1,143 @@
+{% extends "eden/base_clip.html" %}
+{% load static %}
+
+{% block title %}{{ clip.name }}{% endblock %}
+
+{% block content %}
+  <div class="video-editor-container">
+    <h1 class="main-title">{{ clip.name }}</h1>
+
+    <div class="video-player">
+      <video id="clipH" class="clip-video" controls>
+        <source src="{{ clip.video.url }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <audio id="voicePrompt">
+      <source src="{% static 'audio/he was manic.mp3' %}" type="audio/mpeg">
+    </audio>
+
+            <!-- News ticker below video player -->
+  <div class="news-ticker-container" id="newsTicker">
+    <div class="news-ticker">
+      <span>
+        BREAKING: Kenya launches Africa’s largest green tech hub! | Nairobi traffic robots now powered by AI! | Kenyan animators win global awards for interactive storytelling!
+      </span>
+    </div>
+  </div>
+  <!-- End news ticker -->
+
+    <p class="subtitle">{{ clip.description }}</p>
+
+    <!-- AI Generation Section -->
+    <div id="ai-generation-section" style="display:none; text-align:center; margin-top: 20px;">
+      <h2 class="main-title">What Happens Next?</h2>
+      <p class="subtitle">Describe the final scene. The AI will generate it for you.</p>
+      <form id="ai-prompt-form" class="ai-form">
+        {% csrf_token %}
+        <input type="text" id="ai-prompt-input" name="prompt" placeholder="e.g., The detective walks away into the neon-lit rain..." required>
+        <button type="submit" class="choice-link">Generate My Ending</button>
+      </form>
+      <div id="ai-result-container" style="margin-top: 20px;"></div>
+    </div>
+    <!-- End AI Generation Section -->
+
+    <div id="denied-screen" style="display:none; text-align:center; font-size:2em; margin-top:2em;">
+      ACCESS DENIED.
+    </div>
+  </div>
+
+  <div class="build-your-story-cta">
+    <h2>Inspired? Build Your Own Interactive Story!</h2>
+    <p>Continue the adventure by creating your own film and sharing it with others.</p>
+    <a href="{% url 'user:film_create' %}" class="cta-button">Start Your Story</a>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+   // Fade out the ticker after 10 seconds
+  setTimeout(function() {
+    var ticker = document.getElementById('newsTicker');
+    if (ticker) {
+      ticker.classList.add('fade-out');
+    }
+  }, 10000);
+
+function setupClipH() {
+  const video = document.getElementById('clipH');
+  if (!video) return;
+  // Prevent re-initialization on HTMX swaps if element persists
+  if (video.dataset.clipHInitialized) return;
+  video.dataset.clipHInitialized = 'true';
+
+  const voicePrompt = document.getElementById('voicePrompt');
+  const aiSection = document.getElementById('ai-generation-section');
+  const CHOICES_SHOW_TIME = 90;
+
+  let audioPlayed = false;
+  let choicesShown = false;
+
+  if (aiSection) aiSection.style.display = 'none';
+
+  const playHandler = () => {
+    if (voicePrompt && !audioPlayed) {
+      voicePrompt.currentTime = 0;
+      voicePrompt.play();
+      audioPlayed = true;
+    }
+  };
+
+  const timeUpdateHandler = () => {
+    if (video.currentTime >= CHOICES_SHOW_TIME && !choicesShown) {
+      if (aiSection) aiSection.style.display = 'block';
+      choicesShown = true;
+    }
+  };
+
+  video.addEventListener('play', playHandler);
+  video.addEventListener('timeupdate', timeUpdateHandler);
+
+  const aiForm = document.getElementById('ai-prompt-form');
+  if (aiForm) {
+    aiForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const promptInput = document.getElementById('ai-prompt-input');
+      const resultContainer = document.getElementById('ai-result-container');
+      const submitButton = aiForm.querySelector('button');
+
+      resultContainer.innerHTML = '<p>Generating your unique ending... please wait.</p>';
+      submitButton.disabled = true;
+
+      try {
+        const response = await fetch("{% url 'generation:generate_image' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': aiForm.querySelector('[name=csrfmiddlewaretoken]').value,
+          },
+          body: JSON.stringify({ prompt: promptInput.value }),
+        });
+
+        if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+        const data = await response.json();
+        resultContainer.innerHTML = `<img src="${data.image_url}" alt="Generated scene" style="max-width: 100%; border-radius: 8px;">`;
+      } catch (error) {
+        resultContainer.innerHTML = `<p style="color: red;">Error generating image: ${error.message}</p>`;
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  }
+}
+
+setupClipH();
+
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+  if (document.getElementById('clipH')) {
+    setupClipH();
+  }
+});
+</script>
+{% endblock %}

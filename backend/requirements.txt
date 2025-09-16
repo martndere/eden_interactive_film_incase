@@ -1,0 +1,11 @@
+Django>=3.2,<5.0
+Pillow
+django-htmx
+whitenoise
+djangorestframework
+django-cors-headers
+djangorestframework-simplejwt
+django-filter
+# Add any other dependencies your project uses below
+openai
+python-decouple
