@@ -12,6 +12,7 @@ urlpatterns = [
     # API endpoints
     # path('api/generation/', include('apps.generation.urls')), # Commented out until the app is created
     # Include other app URLs. The 'eden' app contains both web and API routes.
+    path('generation/', include('apps.generation.urls')),
     path('', include('apps.eden.urls')),
     path('users/', include('apps.user.urls')),
     path('interact-3d/', include('apps.interact_3d.urls')),

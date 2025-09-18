@@ -1,4 +1,6 @@
 from django.db import models
+from django.urls import reverse
+import uuid
 
 class Clip(models.Model):
     name = models.CharField(max_length=100)
@@ -11,7 +13,7 @@ class Clip(models.Model):
     prompt_time = models.FloatField(default=0.0, help_text="Time (in seconds) to show choices or prompt")
     audio_prompt = models.FileField(upload_to='audio_prompts/', blank=True, null=True)
     extra_notes = models.TextField(blank=True, help_text="Internal notes or script directions")
-
+    transcript = models.TextField(blank=True, help_text="Auto-generated transcript of the clip's audio.")
     def __str__(self):
         return self.name
 

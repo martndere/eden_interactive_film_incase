@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'apps.eden.apps.EdenConfig',
     'apps.user.apps.UserConfig',
     'apps.interact_3d.apps.Interact3DConfig',
-    # 'apps.generation.apps.GenerationConfig', # Commented out until the app is created
+    'apps.generation.apps.GenerationConfig',
 ]
 
 MIDDLEWARE = [
